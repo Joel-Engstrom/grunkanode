@@ -1,0 +1,15 @@
+{
+  "name": "grunkanode",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "dev": "node index.js"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "johnny-five": "^2.1.0",
+    "socket.io": "^4.5.4"
+  }
+}
