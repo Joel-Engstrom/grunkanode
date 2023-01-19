@@ -1,8 +1,9 @@
 const { Board, Servo } = require("johnny-five");
 const board = new Board();
 
-var isConnected = false;
+const SERVO_SENSITIVITY = 0.5;
 
+var isConnected = false;
 var servoBase = null;
 var servoLowerArm = null;
 
@@ -14,7 +15,6 @@ board.on("ready", () => {
     range: [0, 180], // Default: 0-180
     fps: 100, // Used to calculate rate of movement between positions
     invert: false, // Invert all specified positions
-    startAt: 90, // Immediately move to a degree
     center: true, // overrides startAt if true and moves the servo to the center of the range
   });
 
@@ -22,12 +22,11 @@ board.on("ready", () => {
 
   servoLowerArm = new Servo({
     id: "servoLowerArm", // User defined id
-    pin: 0, // Which pin is it attached to?
+    pin: 3, // Which pin is it attached to?
     type: "standard", // Default: "standard". Use "continuous" for continuous rotation servos
     range: [0, 180], // Default: 0-180
     fps: 100, // Used to calculate rate of movement between positions
     invert: false, // Invert all specified positions
-    startAt: 90, // Immediately move to a degree
     center: true, // overrides startAt if true and moves the servo to the center of the range
   });
 
@@ -40,16 +39,24 @@ board.on("ready", () => {
   isConnected = true;
 });
 
-const moveBaseMax = ({ input }) => {
+const moveBase = (input) => {
   if (isConnected) {
-    servoBase.to(180);
+    console.log(
+      `Moving base to: ${servoBase.position + input * SERVO_SENSITIVITY}`
+    );
+    servoBase.to(servoBase.position + input * SERVO_SENSITIVITY);
   }
 };
 
-const moveBaseMin = ({ input }) => {
+const moveLowerArm = (input) => {
   if (isConnected) {
-    servoBase.to(0);
+    console.log(
+      `Moving lower arm to: ${
+        servoLowerArm.position + input * SERVO_SENSITIVITY
+      }`
+    );
+    servoLowerArm.to(servoLowerArm.position + input * SERVO_SENSITIVITY);
   }
 };
 
-module.exports = { moveBaseMax, moveBaseMin };
+module.exports = { moveBase, moveLowerArm };
