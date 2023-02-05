@@ -1,7 +1,8 @@
 const { Board, Servo } = require("johnny-five");
 const board = new Board();
 
-const SERVO_SENSITIVITY = 1.2;
+const SERVO_SENSITIVITY = 0.8;
+const CLAW_SENSITIVITY = 1;
 
 var isConnected = false;
 var servoBase = null;
@@ -101,11 +102,11 @@ const moveClaw = (input) => {
   if (isConnected) {
     console.log(
       `Moving claw to: ${
-        servoClaw.position + input * SERVO_SENSITIVITY
+        servoClaw.position + input * CLAW_SENSITIVITY
       }`
     );
-    servoClaw.to(servoClaw.position + input * SERVO_SENSITIVITY);
-    return servoClaw.position + input * SERVO_SENSITIVITY;
+    servoClaw.to(servoClaw.position + input * CLAW_SENSITIVITY);
+    return servoClaw.position + input * CLAW_SENSITIVITY;
   }
 };
 
