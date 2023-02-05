@@ -1,7 +1,7 @@
 const { Board, Servo } = require("johnny-five");
 const board = new Board();
 
-const SERVO_SENSITIVITY = 2;
+const SERVO_SENSITIVITY = 1.2;
 
 var isConnected = false;
 var servoBase = null;

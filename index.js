@@ -40,7 +40,7 @@ io.on("connection", (socket) => {
       }
     }
 
-    if (data.stick === "right_stick" && data.axis === 2) {
+    if (data.stick === "right_stick" && data.axis === 3) {
       currentUpperArm = handleUpperArm(data.value).toFixed(0);
       if (Math.abs(previousUpperArm - currentUpperArm) >= 5) {
         sendToSocket({ base: currentBase, lowerArm: currentLowerArm, upperArm: currentUpperArm, claw: currentClaw });
@@ -48,7 +48,7 @@ io.on("connection", (socket) => {
       }
     } 
     
-    if (data.stick === "right_stick" && data.axis === 3) {
+    if (data.stick === "right_stick" && data.axis === 2) {
       currentClaw = handleClaw(data.value).toFixed(0);
       if (Math.abs(previousClaw - currentClaw) >= 5) {
         sendToSocket({ base: currentBase, lowerArm: currentLowerArm, upperArm: currentUpperArm, claw: currentClaw });
@@ -58,7 +58,7 @@ io.on("connection", (socket) => {
   });
 
   const handleBaseTurn = (value) => {
-    return moveBase(value);
+    return moveBase(value * -1);
   };
 
   const handleLowerArm = (value) => {
