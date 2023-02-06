@@ -47,7 +47,7 @@ board.on("ready", () => {
     id: "servoClaw", // User defined id
     pin: 13, // Which pin is it attached to?
     type: "standard", // Default: "standard". Use "continuous" for continuous rotation servos
-    range: [5, 105], // Default: 0-180
+    range: [0, 110], // Default: 0-180
     fps: 100, // Used to calculate rate of movement between positions
     invert: false, // Invert all specified positions
     center: true, // overrides startAt if true and moves the servo to the center of the range
