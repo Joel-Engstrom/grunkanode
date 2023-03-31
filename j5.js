@@ -2,18 +2,19 @@ const { Board, Servo, Motor } = require("johnny-five");
 const board = new Board();
 
 const SERVO_SENSITIVITY = 0.8;
-const CLAW_SENSITIVITY = 1;
+const CLAW_SENSITIVITY = 1.2;
 
 var isConnected = false;
 var servoBase = null;
 var servoLowerArm = null;
 var servoUpperArm = null;
 var servoClaw = null;
+var motorTest = null;
 
 board.on("ready", () => {
   servoBase = new Servo({
     id: "servoBase", // User defined id
-    pin: 3, // Which pin is it attached to?
+    pin: 2, // Which pin is it attached to?
     type: "standard", // Default: "standard". Use "continuous" for continuous rotation servos
     range: [0, 200], // Default: 0-180
     fps: 100, // Used to calculate rate of movement between positions
@@ -53,12 +54,42 @@ board.on("ready", () => {
     center: true, // overrides startAt if true and moves the servo to the center of the range
   });
 
+  motorTest = new Motor({
+    pins: {
+      pwm: 5,
+      dir: 12
+    }
+  });
+
   // Add servo to REPL (optional)
   board.repl.inject({
     servoBase,
     servoLowerArm,
     servoUpperArm,
-    servoClaw
+    servoClaw,
+    motorTest
+  });
+
+  motorTest.on("start", () => {
+    console.log(`Motorn startades: ${Date.now()}`);
+  });
+  
+  motorTest.on("stop", () => {
+    console.log(`automated stop on timer: ${Date.now()}`);
+  });
+  
+  motorTest.on("forward", () => {
+    console.log(`forward: ${Date.now()}`);
+  
+    // demonstrate switching to reverse after 5 seconds
+    // board.wait(5000, () => motorTest.reverse(50));
+  });
+  
+  motorTest.on("reverse", () => {
+    console.log(`reverse: ${Date.now()}`);
+  
+    // demonstrate stopping after 5 seconds
+    // board.wait(5000, motorTest.stop);
   });
 
   isConnected = true;
@@ -110,7 +141,20 @@ const moveClaw = (input) => {
   }
 };
 
+
 const delay = ms => new Promise(resolve => setTimeout(resolve, ms))
+
+const motorForward = async () => {
+  motorTest.forward(255);
+};
+
+const motorReverse = async () => {
+  motorTest.reverse(255);
+};
+
+const motorStop = async () => {
+  motorTest.stop();
+};
 
 const moveToButton = async () => {
   servoLowerArm.to(120);
@@ -133,4 +177,4 @@ const moveAwayFromButton = async () => {
   servoUpperArm.to(50);
 }
 
-module.exports = { moveBase, moveLowerArm, moveUpperArm, moveClaw, moveToButton, moveAwayFromButton };
+module.exports = { moveBase, moveLowerArm, moveUpperArm, moveClaw, moveToButton, moveAwayFromButton, motorForward, motorReverse, motorStop };

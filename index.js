@@ -1,5 +1,5 @@
 const http = require("http").createServer();
-const { moveBase, moveLowerArm, moveUpperArm, moveClaw, moveToButton, moveAwayFromButton } = require("./j5");
+const { moveBase, moveLowerArm, moveUpperArm, moveClaw, moveToButton, moveAwayFromButton, motorForward, motorReverse, motorStop } = require("./j5");
 
 const io = require("socket.io")(http, {
   cors: { origin: "*" },
@@ -22,15 +22,27 @@ io.on("connection", (socket) => {
   socket.on("input", (data) => {
     console.log(data);
 
+    if (data === "button_7") {
+      motorForward();
+    }
+
     if (data === "button_6") {
+      motorReverse();
+    }
+
+    if (data === "button_9") {
+      motorStop();
+    }
+
+    /* if (data === "button_6") {
       moveToButton();
     }
 
     if (data === "button_7") {
       moveAwayFromButton();
-    }
+    } */
 
-    if (data === "button_12") {
+    /* if (data === "button_12") {
       currentLowerArm = handleLowerArm(-2).toFixed(0);
       currentUpperArm = handleUpperArm(-2).toFixed(0);
 
@@ -56,7 +68,7 @@ io.on("connection", (socket) => {
       });
       previousLowerArm = currentLowerArm;
       previousUpperArm = currentUpperArm;
-    }
+    } */
 
     if (data === "button_14") {
       currentBase = handleBaseTurn(-1).toFixed(0);
