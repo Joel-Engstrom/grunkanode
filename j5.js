@@ -9,7 +9,8 @@ var servoBase = null;
 var servoLowerArm = null;
 var servoUpperArm = null;
 var servoClaw = null;
-var motorTest = null;
+var motorLeft = null;
+var motorRight = null;
 
 board.on("ready", () => {
   servoBase = new Servo({
@@ -54,42 +55,47 @@ board.on("ready", () => {
     center: true, // overrides startAt if true and moves the servo to the center of the range
   });
 
-  motorTest = new Motor({
+  motorLeft = new Motor({
     pins: {
-      pwm: 5,
-      dir: 12
+      pwm: 6,
+      dir: 4,
+      cdir: 5
+    }
+  });
+
+  motorRight = new Motor({
+    pins: {
+      pwm: 11,
+      dir: 12,
+      cdir: 13
     }
   });
 
   // Add servo to REPL (optional)
   board.repl.inject({
-    servoBase,
+    /*servoBase,
     servoLowerArm,
     servoUpperArm,
-    servoClaw,
-    motorTest
+    servoClaw,*/
+    motorLeft,
+    motorRight
   });
 
-  motorTest.on("start", () => {
+  
+  motorLeft.on("start", () => {
     console.log(`Motorn startades: ${Date.now()}`);
   });
   
-  motorTest.on("stop", () => {
+  motorLeft.on("stop", () => {
     console.log(`automated stop on timer: ${Date.now()}`);
   });
   
-  motorTest.on("forward", () => {
+  motorLeft.on("forward", () => {
     console.log(`forward: ${Date.now()}`);
-  
-    // demonstrate switching to reverse after 5 seconds
-    // board.wait(5000, () => motorTest.reverse(50));
   });
   
-  motorTest.on("reverse", () => {
+  motorLeft.on("reverse", () => {
     console.log(`reverse: ${Date.now()}`);
-  
-    // demonstrate stopping after 5 seconds
-    // board.wait(5000, motorTest.stop);
   });
 
   isConnected = true;
@@ -144,16 +150,64 @@ const moveClaw = (input) => {
 
 const delay = ms => new Promise(resolve => setTimeout(resolve, ms))
 
-const motorForward = async () => {
-  motorTest.forward(255);
+const moveRobot = async (Axes) => {
+  let distance = Math.sqrt(Math.pow(Axes[0], 2) + Math.pow(Axes[1], 2));
+
+  const x = Axes[0];
+  const y = Axes[1] * -1;
+
+  if (y > 0) {
+    moveForward(x, distance);
+  } else {
+    moveReverse(x, distance);
+  }
 };
 
-const motorReverse = async () => {
-  motorTest.reverse(255);
-};
+const moveForward = (x, dist) => {
+  let rightMotor = 0;
+  let leftMotor = 0;
+  const speed = dist * 100;
+
+  if (x < 0 ) {
+    rightMotor = speed * (1 + x);
+  } else {
+    rightMotor = speed;
+  }
+
+  if (x > 0) {
+    leftMotor = speed * (1 - x);
+  } else {
+    leftMotor = speed;
+  }
+
+  motorLeft.forward(leftMotor);
+  motorRight.forward(rightMotor);
+}
+
+const moveReverse = (x, dist) => {
+  let rightMotor = 0;
+  let leftMotor = 0;
+  const speed = dist * 100;
+
+  if (x < 0 ) {
+    rightMotor = speed * (1 + x);
+  } else {
+    rightMotor = speed;
+  }
+
+  if (x > 0) {
+    leftMotor = speed * (1 - x);
+  } else {
+    leftMotor = speed;
+  }
+
+  motorLeft.reverse(leftMotor);
+  motorRight.reverse(rightMotor);
+}
 
 const motorStop = async () => {
-  motorTest.stop();
+  motorLeft.stop();
+  motorRight.stop();
 };
 
 const moveToButton = async () => {
@@ -177,4 +231,9 @@ const moveAwayFromButton = async () => {
   servoUpperArm.to(50);
 }
 
-module.exports = { moveBase, moveLowerArm, moveUpperArm, moveClaw, moveToButton, moveAwayFromButton, motorForward, motorReverse, motorStop };
+board.on("exit", () => {
+  motorLeft.stop();
+  motorRight.stop();
+}) 
+
+module.exports = { moveBase, moveLowerArm, moveUpperArm, moveClaw, moveToButton, moveAwayFromButton, moveRobot, motorStop };

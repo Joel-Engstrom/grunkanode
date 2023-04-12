@@ -1,5 +1,14 @@
 const http = require("http").createServer();
-const { moveBase, moveLowerArm, moveUpperArm, moveClaw, moveToButton, moveAwayFromButton, motorForward, motorReverse, motorStop } = require("./j5");
+const {
+  moveBase,
+  moveLowerArm,
+  moveUpperArm,
+  moveClaw,
+  moveToButton,
+  moveAwayFromButton,
+  moveRobot,
+  motorStop,
+} = require("./j5");
 
 const io = require("socket.io")(http, {
   cors: { origin: "*" },
@@ -34,15 +43,15 @@ io.on("connection", (socket) => {
       motorStop();
     }
 
-    /* if (data === "button_6") {
+    if (data === "button_6") {
       moveToButton();
     }
 
     if (data === "button_7") {
       moveAwayFromButton();
-    } */
+    }
 
-    /* if (data === "button_12") {
+    if (data === "button_12") {
       currentLowerArm = handleLowerArm(-2).toFixed(0);
       currentUpperArm = handleUpperArm(-2).toFixed(0);
 
@@ -68,7 +77,7 @@ io.on("connection", (socket) => {
       });
       previousLowerArm = currentLowerArm;
       previousUpperArm = currentUpperArm;
-    } */
+    }
 
     if (data === "button_14") {
       currentBase = handleBaseTurn(-1).toFixed(0);
@@ -92,7 +101,10 @@ io.on("connection", (socket) => {
       previousBase = currentBase;
     }
 
-    if (data.stick === "left_stick" && data.axis === 0) {
+    /*===================================================
+              Claw Controls
+    =====================================================*/
+    if (data.stick === "left_stick" && data.axis === 0 && data.controller === 1) {
       currentBase = handleBaseTurn(data.value).toFixed(0);
       if (Math.abs(previousBase - currentBase) >= 5) {
         sendToSocket({
@@ -105,7 +117,7 @@ io.on("connection", (socket) => {
       }
     }
 
-    if (data.stick === "left_stick" && data.axis === 1) {
+    if (data.stick === "left_stick" && data.axis === 1 && data.controller === 1) {
       currentLowerArm = handleLowerArm(data.value).toFixed(0);
       if (Math.abs(previousLowerArm - currentLowerArm) >= 5) {
         sendToSocket({
@@ -118,7 +130,7 @@ io.on("connection", (socket) => {
       }
     }
 
-    if (data.stick === "right_stick" && data.axis === 3) {
+    if (data.stick === "right_stick" && data.axis === 3 && data.controller === 1) {
       currentUpperArm = handleUpperArm(data.value).toFixed(0);
       if (Math.abs(previousUpperArm - currentUpperArm) >= 5) {
         sendToSocket({
@@ -131,7 +143,7 @@ io.on("connection", (socket) => {
       }
     }
 
-    if (data.stick === "right_stick" && data.axis === 2) {
+    if (data.stick === "right_stick" && data.axis === 2 && data.controller === 1) {
       currentClaw = handleClaw(data.value).toFixed(0);
       if (Math.abs(previousClaw - currentClaw) >= 5) {
         sendToSocket({
@@ -142,6 +154,18 @@ io.on("connection", (socket) => {
         });
         previousClaw = currentClaw;
       }
+    }
+
+    /*===================================================
+              Driver Controls
+    =====================================================*/
+
+    if (data.stick === "left_stick" && data.controller === 0) {
+      moveRobot(data.axes);
+    }
+
+    if (data.stick === "right_stick" && data.controller === 0) {
+      //moveHead(data.value);
     }
   });
 
