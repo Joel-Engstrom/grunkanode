@@ -31,18 +31,6 @@ io.on("connection", (socket) => {
   socket.on("input", (data) => {
     console.log(data);
 
-    if (data === "button_7") {
-      motorForward();
-    }
-
-    if (data === "button_6") {
-      motorReverse();
-    }
-
-    if (data === "button_9") {
-      motorStop();
-    }
-
     if (data === "button_6") {
       moveToButton();
     }
