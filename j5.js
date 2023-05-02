@@ -1,5 +1,17 @@
 const { Board, Servo, Motor } = require("johnny-five");
-const board = new Board();
+var SerialPort = require("serialport").SerialPort;
+/* const myPort = new SerialPort({
+  path:"COM4",
+  baudRate:19200,
+  buffersize: 1,
+}); */
+
+const board = new Board({
+  port: new SerialPort({
+    path: 'COM4',
+    baudRate: 19200,
+  })
+});
 
 const SERVO_SENSITIVITY = 0.8;
 const CLAW_SENSITIVITY = 1.2;
@@ -59,16 +71,16 @@ board.on("ready", () => {
     pins: {
       pwm: 6,
       dir: 4,
-      cdir: 5
-    }
+      cdir: 5,
+    },
   });
 
   motorRight = new Motor({
     pins: {
       pwm: 11,
       dir: 12,
-      cdir: 13
-    }
+      cdir: 13,
+    },
   });
 
   // Add servo to REPL (optional)
@@ -78,22 +90,21 @@ board.on("ready", () => {
     servoUpperArm,
     servoClaw,*/
     motorLeft,
-    motorRight
+    motorRight,
   });
 
-  
   motorLeft.on("start", () => {
     console.log(`Motorn startades: ${Date.now()}`);
   });
-  
+
   motorLeft.on("stop", () => {
     console.log(`automated stop on timer: ${Date.now()}`);
   });
-  
+
   motorLeft.on("forward", () => {
     console.log(`forward: ${Date.now()}`);
   });
-  
+
   motorLeft.on("reverse", () => {
     console.log(`reverse: ${Date.now()}`);
   });
@@ -138,17 +149,14 @@ const moveUpperArm = (input) => {
 const moveClaw = (input) => {
   if (isConnected) {
     console.log(
-      `Moving claw to: ${
-        servoClaw.position + input * CLAW_SENSITIVITY
-      }`
+      `Moving claw to: ${servoClaw.position + input * CLAW_SENSITIVITY}`
     );
     servoClaw.to(servoClaw.position + input * CLAW_SENSITIVITY);
     return servoClaw.position + input * CLAW_SENSITIVITY;
   }
 };
 
-
-const delay = ms => new Promise(resolve => setTimeout(resolve, ms))
+const delay = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
 const moveRobot = async (Axes) => {
   let distance = Math.sqrt(Math.pow(Axes[0], 2) + Math.pow(Axes[1], 2));
@@ -166,30 +174,9 @@ const moveRobot = async (Axes) => {
 const moveForward = (x, dist) => {
   let rightMotor = 0;
   let leftMotor = 0;
-  const speed = dist * 100;
+  const speed = dist * 255;
 
-  if (x < 0 ) {
-    rightMotor = speed * (1 + x);
-  } else {
-    rightMotor = speed;
-  }
-
-  if (x > 0) {
-    leftMotor = speed * (1 - x);
-  } else {
-    leftMotor = speed;
-  }
-
-  motorLeft.forward(leftMotor);
-  motorRight.forward(rightMotor);
-}
-
-const moveReverse = (x, dist) => {
-  let rightMotor = 0;
-  let leftMotor = 0;
-  const speed = dist * 100;
-
-  if (x < 0 ) {
+  if (x < 0) {
     rightMotor = speed * (1 + x);
   } else {
     rightMotor = speed;
@@ -202,8 +189,29 @@ const moveReverse = (x, dist) => {
   }
 
   motorLeft.reverse(leftMotor);
+  motorRight.forward(rightMotor);
+};
+
+const moveReverse = (x, dist) => {
+  let rightMotor = 0;
+  let leftMotor = 0;
+  const speed = dist * 255;
+
+  if (x < 0) {
+    rightMotor = speed * (1 + x);
+  } else {
+    rightMotor = speed;
+  }
+
+  if (x > 0) {
+    leftMotor = speed * (1 - x);
+  } else {
+    leftMotor = speed;
+  }
+
+  motorLeft.forward(leftMotor);
   motorRight.reverse(rightMotor);
-}
+};
 
 const motorStop = async () => {
   motorLeft.stop();
@@ -212,28 +220,37 @@ const motorStop = async () => {
 
 const moveToButton = async () => {
   servoLowerArm.to(120);
-  await delay(100)
+  await delay(100);
   servoUpperArm.to(120);
-  await delay(100)
+  await delay(100);
   servoBase.to(150);
   await delay(100);
   servoUpperArm.to(40);
   servoLowerArm.to(35);
-}
+};
 
 const moveAwayFromButton = async () => {
   servoLowerArm.to(100);
   servoUpperArm.to(140);
-  await delay(200)
-  servoBase.to(20)
-  await delay(400)
+  await delay(200);
+  servoBase.to(20);
+  await delay(400);
   servoLowerArm.to(50);
   servoUpperArm.to(50);
-}
+};
 
 board.on("exit", () => {
   motorLeft.stop();
   motorRight.stop();
-}) 
+});
 
-module.exports = { moveBase, moveLowerArm, moveUpperArm, moveClaw, moveToButton, moveAwayFromButton, moveRobot, motorStop };
+module.exports = {
+  moveBase,
+  moveLowerArm,
+  moveUpperArm,
+  moveClaw,
+  moveToButton,
+  moveAwayFromButton,
+  moveRobot,
+  motorStop,
+};
