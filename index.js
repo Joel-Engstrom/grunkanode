@@ -7,7 +7,9 @@ const {
   moveToButton,
   moveAwayFromButton,
   moveRobot,
-  motorStop,
+  toggleHatch,
+  dropHatch,
+  danceHatch
 } = require("./j5");
 
 const io = require("socket.io")(http, {
@@ -31,15 +33,18 @@ io.on("connection", (socket) => {
   socket.on("input", (data) => {
     console.log(data);
 
-    if (data === "button_6") {
+    /*===================================================
+              Claw Controls
+    =====================================================*/
+    if (data === "button_6" && data.controller === 1) {
       moveToButton();
     }
 
-    if (data === "button_7") {
+    if (data === "button_7" && data.controller === 1) {
       moveAwayFromButton();
     }
 
-    if (data === "button_12") {
+    if (data === "button_12" && data.controller === 1) {
       currentLowerArm = handleLowerArm(-2).toFixed(0);
       currentUpperArm = handleUpperArm(-2).toFixed(0);
 
@@ -53,7 +58,7 @@ io.on("connection", (socket) => {
       previousUpperArm = currentUpperArm;
     }
 
-    if (data === "button_13") {
+    if (data === "button_13" && data.controller === 1) {
       currentLowerArm = handleLowerArm(2).toFixed(0);
       currentUpperArm = handleUpperArm(2).toFixed(0);
 
@@ -67,7 +72,7 @@ io.on("connection", (socket) => {
       previousUpperArm = currentUpperArm;
     }
 
-    if (data === "button_14") {
+    if (data === "button_14" && data.controller === 1) {
       currentBase = handleBaseTurn(-1).toFixed(0);
       sendToSocket({
         base: currentBase,
@@ -78,7 +83,7 @@ io.on("connection", (socket) => {
       previousBase = currentBase;
     }
 
-    if (data === "button_15") {
+    if (data === "button_15" && data.controller === 1) {
       currentBase = handleBaseTurn(1).toFixed(0);
       sendToSocket({
         base: currentBase,
@@ -89,9 +94,7 @@ io.on("connection", (socket) => {
       previousBase = currentBase;
     }
 
-    /*===================================================
-              Claw Controls
-    =====================================================*/
+    
     if (data.stick === "left_stick" && data.axis === 0 && data.controller === 1) {
       currentBase = handleBaseTurn(data.value).toFixed(0);
       if (Math.abs(previousBase - currentBase) >= 5) {
@@ -144,6 +147,18 @@ io.on("connection", (socket) => {
       }
     }
 
+    if (data === "button_0" && data.controller === 1) {
+      toggleHatch();
+    }
+
+    if (data === "button_2" && data.controller === 1) {
+      dropHatch();
+    }
+
+    if (data === "button_3" && data.controller === 1) {
+      danceHatch();
+    }
+
     /*===================================================
               Driver Controls
     =====================================================*/
@@ -152,9 +167,9 @@ io.on("connection", (socket) => {
       moveRobot(data.axes);
     }
 
-    if (data.stick === "right_stick" && data.controller === 0) {
+   /*  if (data.stick === "right_stick" && data.controller === 0) {
       //moveHead(data.value);
-    }
+    } */
   });
 
   const handleBaseTurn = (value) => {

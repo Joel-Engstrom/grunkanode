@@ -9,7 +9,7 @@ var SerialPort = require("serialport").SerialPort;
 const board = new Board({
   port: new SerialPort({
     path: 'COM4',
-    baudRate: 19200,
+    baudRate: 57600,
   })
 });
 
@@ -17,17 +17,26 @@ const SERVO_SENSITIVITY = 0.8;
 const CLAW_SENSITIVITY = 1.2;
 
 var isConnected = false;
+var isHatchOpen = false;
+var isHatchDropped = false;
+
+// Arm servos
 var servoBase = null;
 var servoLowerArm = null;
 var servoUpperArm = null;
 var servoClaw = null;
+var servoHatch = null;
+// Motors for moving
 var motorLeft = null;
 var motorRight = null;
+// Head servos
+var servoNeck = null;
+var servoEyes = null;
 
 board.on("ready", () => {
   servoBase = new Servo({
     id: "servoBase", // User defined id
-    pin: 2, // Which pin is it attached to?
+    pin: 3, // Which pin is it attached to?
     type: "standard", // Default: "standard". Use "continuous" for continuous rotation servos
     range: [0, 200], // Default: 0-180
     fps: 100, // Used to calculate rate of movement between positions
@@ -59,9 +68,39 @@ board.on("ready", () => {
 
   servoClaw = new Servo({
     id: "servoClaw", // User defined id
-    pin: 13, // Which pin is it attached to?
+    pin: 8, // Which pin is it attached to?
     type: "standard", // Default: "standard". Use "continuous" for continuous rotation servos
     range: [0, 110], // Default: 0-180
+    fps: 100, // Used to calculate rate of movement between positions
+    invert: false, // Invert all specified positions
+    center: true, // overrides startAt if true and moves the servo to the center of the range
+  });
+
+  servoHatch = new Servo({
+    id: "servoHatch", // User defined id
+    pin: 0, // Which pin is it attached to?
+    type: "standard", // Default: "standard". Use "continuous" for continuous rotation servos
+    range: [0, 180], // Default: 0-180
+    fps: 100, // Used to calculate rate of movement between positions
+    invert: false, // Invert all specified positions
+    center: true, // overrides startAt if true and moves the servo to the center of the range
+  });
+
+  servoNeck = new Servo({
+    id: "servoNeck", // User defined id
+    pin: 1, // Which pin is it attached to?
+    type: "standard", // Default: "standard". Use "continuous" for continuous rotation servos
+    range: [0, 180], // Default: 0-180
+    fps: 100, // Used to calculate rate of movement between positions
+    invert: false, // Invert all specified positions
+    center: true, // overrides startAt if true and moves the servo to the center of the range
+  });
+
+  servoEyes = new Servo({
+    id: "servoEyes", // User defined id
+    pin: 2, // Which pin is it attached to?
+    type: "standard", // Default: "standard". Use "continuous" for continuous rotation servos
+    range: [0, 180], // Default: 0-180
     fps: 100, // Used to calculate rate of movement between positions
     invert: false, // Invert all specified positions
     center: true, // overrides startAt if true and moves the servo to the center of the range
@@ -85,10 +124,13 @@ board.on("ready", () => {
 
   // Add servo to REPL (optional)
   board.repl.inject({
-    /*servoBase,
+    servoBase,
     servoLowerArm,
     servoUpperArm,
-    servoClaw,*/
+    servoClaw,
+    /* servoHatch,
+    servoNeck,
+    servoEyes, */
     motorLeft,
     motorRight,
   });
@@ -156,9 +198,37 @@ const moveClaw = (input) => {
   }
 };
 
+const toggleHatch = () => {
+  if (isHatchOpen) {
+    servoHatch.to(0);
+  } else if (!isHatchOpen) {
+    servoHatch.to(90);
+  }
+  isHatchOpen = !isHatchOpen;
+}
+
+const dropHatch = () => {
+  if (isHatchDropped) {
+    servoHatch.to(0);
+  } else if (!isHatchDropped) {
+    servoHatch.to(180);
+  }
+  isHatchDropped = !isHatchDropped;
+}
+
+const danceHatch = async () => {
+  servoHatch.to(90);
+  await delay(100);
+  servoHatch.to(20);
+  await delay(100);
+  servoHatch.to(90);
+  await delay(100);
+  servoHatch.to(0);
+}
+
 const delay = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
-const moveRobot = async (Axes) => {
+const moveRobot = (Axes) => {
   let distance = Math.sqrt(Math.pow(Axes[0], 2) + Math.pow(Axes[1], 2));
 
   const x = Axes[0];
@@ -174,7 +244,7 @@ const moveRobot = async (Axes) => {
 const moveForward = (x, dist) => {
   let rightMotor = 0;
   let leftMotor = 0;
-  const speed = dist * 255;
+  const speed = dist * 150;
 
   if (x < 0) {
     rightMotor = speed * (1 + x);
@@ -195,7 +265,7 @@ const moveForward = (x, dist) => {
 const moveReverse = (x, dist) => {
   let rightMotor = 0;
   let leftMotor = 0;
-  const speed = dist * 255;
+  const speed = dist * 150;
 
   if (x < 0) {
     rightMotor = speed * (1 + x);
@@ -253,4 +323,7 @@ module.exports = {
   moveAwayFromButton,
   moveRobot,
   motorStop,
+  toggleHatch,
+  dropHatch,
+  danceHatch
 };
