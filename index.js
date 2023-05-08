@@ -9,7 +9,10 @@ const {
   moveRobot,
   toggleHatch,
   dropHatch,
-  danceHatch
+  danceHatch,
+  toggleEyes,
+  toggleHead,
+  toggleEyeBrows
 } = require("./j5");
 
 const io = require("socket.io")(http, {
@@ -36,15 +39,15 @@ io.on("connection", (socket) => {
     /*===================================================
               Claw Controls
     =====================================================*/
-    if (data === "button_6" && data.controller === 1) {
+    if (data.data === "button_6" && data.controller === 1) {
       moveToButton();
     }
 
-    if (data === "button_7" && data.controller === 1) {
+    if (data.data === "button_7" && data.controller === 1) {
       moveAwayFromButton();
     }
 
-    if (data === "button_12" && data.controller === 1) {
+    if (data.data === "button_12" && data.controller === 1) {
       currentLowerArm = handleLowerArm(-2).toFixed(0);
       currentUpperArm = handleUpperArm(-2).toFixed(0);
 
@@ -58,7 +61,7 @@ io.on("connection", (socket) => {
       previousUpperArm = currentUpperArm;
     }
 
-    if (data === "button_13" && data.controller === 1) {
+    if (data.data === "button_13" && data.controller === 1) {
       currentLowerArm = handleLowerArm(2).toFixed(0);
       currentUpperArm = handleUpperArm(2).toFixed(0);
 
@@ -72,7 +75,7 @@ io.on("connection", (socket) => {
       previousUpperArm = currentUpperArm;
     }
 
-    if (data === "button_14" && data.controller === 1) {
+    if (data.data === "button_14" && data.controller === 1) {
       currentBase = handleBaseTurn(-1).toFixed(0);
       sendToSocket({
         base: currentBase,
@@ -83,7 +86,7 @@ io.on("connection", (socket) => {
       previousBase = currentBase;
     }
 
-    if (data === "button_15" && data.controller === 1) {
+    if (data.data === "button_15" && data.controller === 1) {
       currentBase = handleBaseTurn(1).toFixed(0);
       sendToSocket({
         base: currentBase,
@@ -147,15 +150,15 @@ io.on("connection", (socket) => {
       }
     }
 
-    if (data === "button_0" && data.controller === 1) {
+    if (data.data === "button_0" && data.controller === 1) {
       toggleHatch();
     }
 
-    if (data === "button_2" && data.controller === 1) {
+    if (data.data === "button_2" && data.controller === 1) {
       dropHatch();
     }
 
-    if (data === "button_3" && data.controller === 1) {
+    if (data.data === "button_3" && data.controller === 1) {
       danceHatch();
     }
 
@@ -167,9 +170,15 @@ io.on("connection", (socket) => {
       moveRobot(data.axes);
     }
 
-   /*  if (data.stick === "right_stick" && data.controller === 0) {
-      //moveHead(data.value);
-    } */
+    /*===================================================
+              Head Controls
+    =====================================================*/
+
+    if (data.data === "button_0" && data.controller === 2) {
+      //toggleEyes();
+      toggleHead();
+      toggleEyeBrows();
+    } 
   });
 
   const handleBaseTurn = (value) => {
