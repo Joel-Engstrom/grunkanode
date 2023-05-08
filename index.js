@@ -12,7 +12,8 @@ const {
   danceHatch,
   toggleEyes,
   toggleHead,
-  toggleEyeBrows
+  toggleEyeBrows,
+  clawSpin
 } = require("./j5");
 
 const io = require("socket.io")(http, {
@@ -34,7 +35,7 @@ var currentClaw = 0;
 io.on("connection", (socket) => {
   sock = socket;
   socket.on("input", (data) => {
-    console.log(data);
+    //console.log(data);
 
     /*===================================================
               Claw Controls
@@ -99,6 +100,7 @@ io.on("connection", (socket) => {
 
     
     if (data.stick === "left_stick" && data.axis === 0 && data.controller === 1) {
+      console.log("Basen rör sig!")
       currentBase = handleBaseTurn(data.value).toFixed(0);
       if (Math.abs(previousBase - currentBase) >= 5) {
         sendToSocket({
@@ -112,6 +114,7 @@ io.on("connection", (socket) => {
     }
 
     if (data.stick === "left_stick" && data.axis === 1 && data.controller === 1) {
+      console.log("Lägre armen rör sig!")
       currentLowerArm = handleLowerArm(data.value).toFixed(0);
       if (Math.abs(previousLowerArm - currentLowerArm) >= 5) {
         sendToSocket({
@@ -125,6 +128,7 @@ io.on("connection", (socket) => {
     }
 
     if (data.stick === "right_stick" && data.axis === 3 && data.controller === 1) {
+      console.log("Övre armen rör sig!")
       currentUpperArm = handleUpperArm(data.value).toFixed(0);
       if (Math.abs(previousUpperArm - currentUpperArm) >= 5) {
         sendToSocket({
@@ -138,6 +142,7 @@ io.on("connection", (socket) => {
     }
 
     if (data.stick === "right_stick" && data.axis === 2 && data.controller === 1) {
+      console.log("Klon rör sig!")
       currentClaw = handleClaw(data.value).toFixed(0);
       if (Math.abs(previousClaw - currentClaw) >= 5) {
         sendToSocket({
@@ -150,16 +155,12 @@ io.on("connection", (socket) => {
       }
     }
 
-    if (data.data === "button_0" && data.controller === 1) {
-      toggleHatch();
+    if (data.data === "button_4" && data.controller === 1) {
+      clawSpin(-10);
     }
 
-    if (data.data === "button_2" && data.controller === 1) {
-      dropHatch();
-    }
-
-    if (data.data === "button_3" && data.controller === 1) {
-      danceHatch();
+    if (data.data === "button_5" && data.controller === 1) {
+      clawSpin(10);
     }
 
     /*===================================================
@@ -176,8 +177,8 @@ io.on("connection", (socket) => {
 
     if (data.data === "button_0" && data.controller === 2) {
       //toggleEyes();
-      toggleHead();
-      toggleEyeBrows();
+      //toggleHead();
+      //toggleEyeBrows();
     } 
   });
 

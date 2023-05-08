@@ -1,9 +1,9 @@
-const { Board, Servo, Motor, Led } = require("johnny-five");
+const { Board, Servo, Motor } = require("johnny-five");
 var SerialPort = require("serialport").SerialPort;
 
 const board = new Board({
   port: new SerialPort({
-    path: 'COM3',
+    path: 'COM4',
     baudRate: 57600,
   })
 });
@@ -20,6 +20,8 @@ var servoBase = null;
 var servoLowerArm = null;
 var servoUpperArm = null;
 var servoClaw = null;
+var servoClawSpinner = null;
+var clawSpinnerAngle = 90;
 var servoHatch = null;
 // Motors for moving
 var motorLeft = null;
@@ -34,7 +36,7 @@ board.on("ready", () => {
     id: "servoBase", // User defined id
     pin: 0, // Which pin is it attached to?
     type: "standard", // Default: "standard". Use "continuous" for continuous rotation servos
-    range: [0, 200], // Default: 0-180
+    range: [0, 180], // Default: 0-180
     fps: 100, // Used to calculate rate of movement between positions
     invert: false, // Invert all specified positions
     center: true, // overrides startAt if true and moves the servo to the center of the range
@@ -72,9 +74,19 @@ board.on("ready", () => {
     center: true, // overrides startAt if true and moves the servo to the center of the range
   });
 
+  servoClawSpinner = new Servo({
+    id: "servoClawSpinner", // User defined id
+    pin: 7, // Which pin is it attached to?
+    type: "standard", // Default: "standard". Use "continuous" for continuous rotation servos
+    range: [0, 180], // Default: 0-180
+    fps: 100, // Used to calculate rate of movement between positions
+    invert: false, // Invert all specified positions
+    center: true, // overrides startAt if true and moves the servo to the center of the range
+  });
+
   servoHatch = new Servo({
     id: "servoHatch", // User defined id
-    pin: 0, // Which pin is it attached to?
+    pin: 8, // Which pin is it attached to?
     type: "standard", // Default: "standard". Use "continuous" for continuous rotation servos
     range: [0, 180], // Default: 0-180
     fps: 100, // Used to calculate rate of movement between positions
@@ -84,11 +96,11 @@ board.on("ready", () => {
 
   servoNeck = new Servo({
     id: "servoNeck", // User defined id
-    pin: 7, // Which pin is it attached to?
+    pin: 12, // Which pin is it attached to?
     type: "standard", // Default: "standard". Use "continuous" for continuous rotation servos
-    range: [0, 360], // Default: 0-180
+    range: [0, 180], // Default: 0-180
     fps: 100, // Used to calculate rate of movement between positions
-    invert: true, // Invert all specified positions
+    invert: false, // Invert all specified positions
     center: true, // overrides startAt if true and moves the servo to the center of the range
   });
 
@@ -134,10 +146,11 @@ board.on("ready", () => {
     servoLowerArm,
     servoUpperArm,
     servoClaw,
-    //servoHatch,
-    servoNeck,
-    servoEyeBrowRight,
-    servoEyeBrowLeft,
+    servoClawSpinner,
+    servoHatch,
+    //servoNeck,
+    //servoEyeBrowRight,
+    //servoEyeBrowLeft,
     motorLeft,
     motorRight,
   });
@@ -194,6 +207,12 @@ const moveUpperArm = (input) => {
     return servoUpperArm.position + input * SERVO_SENSITIVITY;
   }
 };
+
+const clawSpin = (value) => {
+  prevAngle = clawSpinnerAngle;
+  servoClawSpinner.to(prevAngle + value);
+  clawSpinnerAngle += value;
+}
 
 const moveClaw = (input) => {
   if (isConnected) {
@@ -322,8 +341,8 @@ const toggleEyes = async () => {
 
 const toggleHead = async () => {
   servoNeck.to(0);
-  await delay(2000);
-  servoNeck.to(360);
+  await delay(1000)
+  servoNeck.to(180);
 }
 
 const toggleEyeBrows = async () => {
@@ -350,5 +369,6 @@ module.exports = {
   danceHatch,
   toggleEyes,
   toggleHead,
-  toggleEyeBrows
+  toggleEyeBrows,
+  clawSpin
 };
