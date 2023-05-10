@@ -7,13 +7,17 @@ const {
   moveToButton,
   moveAwayFromButton,
   moveRobot,
-  toggleHatch,
-  dropHatch,
-  danceHatch,
-  toggleEyes,
-  toggleHead,
+  headLeft,
+  headRight,
   toggleEyeBrows,
-  clawSpin
+  clawSpin,
+  headLeftBig,
+  headRightBig,
+  toggleLeftBrow,
+  toggleRightBrow,
+  increaseHatch,
+  lowerHatch,
+  moveArmBack
 } = require("./j5");
 
 const io = require("socket.io")(http, {
@@ -98,6 +102,9 @@ io.on("connection", (socket) => {
       previousBase = currentBase;
     }
 
+    if (data.data === "button_0" && data.controller === 1) {
+      moveArmBack();
+    }   
     
     if (data.stick === "left_stick" && data.axis === 0 && data.controller === 1) {
       console.log("Basen rör sig!")
@@ -169,16 +176,42 @@ io.on("connection", (socket) => {
 
     if (data.stick === "left_stick" && data.controller === 0) {
       moveRobot(data.axes);
-    }
+    } 
 
     /*===================================================
               Head Controls
     =====================================================*/
 
+    if (data.data === "button_4" && data.controller === 2) {
+      headLeftBig();
+    } 
+
+    if (data.data === "button_5" && data.controller === 2) {
+      headRightBig();
+    } 
+
+    if (data.data === "button_6" && data.controller === 2) {
+      headLeft();
+    } 
+
+    if (data.data === "button_7" && data.controller === 2) {
+      headRight();
+    } 
+
     if (data.data === "button_0" && data.controller === 2) {
-      //toggleEyes();
-      //toggleHead();
-      //toggleEyeBrows();
+      toggleLeftBrow();
+    } 
+
+    if (data.data === "button_1" && data.controller === 2) {
+      toggleRightBrow();
+    } 
+    
+    if (data.data === "button_2" && data.controller === 2) {
+      lowerHatch();
+    } 
+
+    if (data.data === "button_3" && data.controller === 2) {
+      increaseHatch();
     } 
   });
 

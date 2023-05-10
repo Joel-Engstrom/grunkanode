@@ -1,4 +1,4 @@
-const { Board, Servo, Motor } = require("johnny-five");
+const { Board, Servo, Motor, Pin } = require("johnny-five");
 var SerialPort = require("serialport").SerialPort;
 
 const board = new Board({
@@ -12,8 +12,11 @@ const SERVO_SENSITIVITY = 0.8;
 const CLAW_SENSITIVITY = 1.2;
 
 var isConnected = false;
-var isHatchOpen = false;
-var isHatchDropped = false;
+
+var leftBrow = false;
+var rightBrow = false;
+
+var hatchPos = 60;
 
 // Arm servos
 var servoBase = null;
@@ -34,7 +37,7 @@ board.on("ready", () => {
 
   servoBase = new Servo({
     id: "servoBase", // User defined id
-    pin: 0, // Which pin is it attached to?
+    pin: 8, // Which pin is it attached to?
     type: "standard", // Default: "standard". Use "continuous" for continuous rotation servos
     range: [0, 180], // Default: 0-180
     fps: 100, // Used to calculate rate of movement between positions
@@ -46,7 +49,7 @@ board.on("ready", () => {
 
   servoLowerArm = new Servo({
     id: "servoLowerArm", // User defined id
-    pin: 1, // Which pin is it attached to?
+    pin: 9, // Which pin is it attached to?
     type: "standard", // Default: "standard". Use "continuous" for continuous rotation servos
     range: [0, 180], // Default: 0-180
     fps: 100, // Used to calculate rate of movement between positions
@@ -56,7 +59,7 @@ board.on("ready", () => {
 
   servoUpperArm = new Servo({
     id: "servoUpperArm", // User defined id
-    pin: 2, // Which pin is it attached to?
+    pin: 10, // Which pin is it attached to?
     type: "standard", // Default: "standard". Use "continuous" for continuous rotation servos
     range: [0, 180], // Default: 0-180
     fps: 100, // Used to calculate rate of movement between positions
@@ -66,12 +69,12 @@ board.on("ready", () => {
 
   servoClaw = new Servo({
     id: "servoClaw", // User defined id
-    pin: 3, // Which pin is it attached to?
+    pin: 2, // Which pin is it attached to?
     type: "standard", // Default: "standard". Use "continuous" for continuous rotation servos
-    range: [0, 110], // Default: 0-180
+    range: [0, 180], // Default: 0-180
     fps: 100, // Used to calculate rate of movement between positions
     invert: false, // Invert all specified positions
-    center: true, // overrides startAt if true and moves the servo to the center of the range
+    center: false, // overrides startAt if true and moves the servo to the center of the range
   });
 
   servoClawSpinner = new Servo({
@@ -86,19 +89,20 @@ board.on("ready", () => {
 
   servoHatch = new Servo({
     id: "servoHatch", // User defined id
-    pin: 8, // Which pin is it attached to?
+    pin: 12, // Which pin is it attached to?
     type: "standard", // Default: "standard". Use "continuous" for continuous rotation servos
-    range: [0, 180], // Default: 0-180
+    range: [60, 170], // Default: 0-180
     fps: 100, // Used to calculate rate of movement between positions
     invert: false, // Invert all specified positions
-    center: true, // overrides startAt if true and moves the servo to the center of the range
+    center: false, // overrides startAt if true and moves the servo to the center of the range
+    startAt: 60,
   });
 
   servoNeck = new Servo({
     id: "servoNeck", // User defined id
-    pin: 12, // Which pin is it attached to?
-    type: "standard", // Default: "standard". Use "continuous" for continuous rotation servos
-    range: [0, 180], // Default: 0-180
+    pin: 13, // Which pin is it attached to?
+    type: "continuous", // Default: "standard". Use "continuous" for continuous rotation servos
+    //range: [0, 360], // Default: 0-180
     fps: 100, // Used to calculate rate of movement between positions
     invert: false, // Invert all specified positions
     center: true, // overrides startAt if true and moves the servo to the center of the range
@@ -106,37 +110,39 @@ board.on("ready", () => {
 
   servoEyeBrowRight = new Servo({
     id: "servoEyeBrowRight", // User defined id
-    pin: 8, // Which pin is it attached to?
+    pin: 4, // Which pin is it attached to?
     type: "standard", // Default: "standard". Use "continuous" for continuous rotation servos
-    range: [0, 20], // Default: 0-180
+    range: [116, 140], // Default: 0-180
     fps: 100, // Used to calculate rate of movement between positions
     invert: false, // Invert all specified positions
-    center: true, // overrides startAt if true and moves the servo to the center of the range
+    center: false, // overrides startAt if true and moves the servo to the center of the range
+    startAt: 140,
   });
 
   servoEyeBrowLeft = new Servo({
     id: "servoEyeBrowLeft", // User defined id
-    pin: 9, // Which pin is it attached to?
+    pin: 5, // Which pin is it attached to?
     type: "standard", // Default: "standard". Use "continuous" for continuous rotation servos
-    range: [0, 20], // Default: 0-180
+    range: [116, 140], // Default: 0-180
     fps: 100, // Used to calculate rate of movement between positions
-    invert: false, // Invert all specified positions
-    center: true, // overrides startAt if true and moves the servo to the center of the range
+    invert: true, // Invert all specified positions
+    center: false, // overrides startAt if true and moves the servo to the center of the range
+    startAt: 140,
   });
 
   motorLeft = new Motor({
     pins: {
       pwm: 6,
-      dir: 4,
-      cdir: 5,
+      dir: 18,
+      cdir: 19,
     },
   });
 
   motorRight = new Motor({
     pins: {
       pwm: 11,
-      dir: 12,
-      cdir: 13,
+      dir: 17,
+      cdir: 16,
     },
   });
 
@@ -148,9 +154,9 @@ board.on("ready", () => {
     servoClaw,
     servoClawSpinner,
     servoHatch,
-    //servoNeck,
-    //servoEyeBrowRight,
-    //servoEyeBrowLeft,
+    servoNeck,
+    servoEyeBrowRight,
+    servoEyeBrowLeft,
     motorLeft,
     motorRight,
   });
@@ -224,32 +230,18 @@ const moveClaw = (input) => {
   }
 };
 
-const toggleHatch = () => {
-  if (isHatchOpen) {
-    servoHatch.to(0);
-  } else if (!isHatchOpen) {
-    servoHatch.to(90);
-  }
-  isHatchOpen = !isHatchOpen;
+const increaseHatch = () => {
+  console.log("Ökar")
+  if (hatchPos >= 170) return;
+  servoHatch.to(hatchPos + 55);
+  hatchPos += 55;
 }
 
-const dropHatch = () => {
-  if (isHatchDropped) {
-    servoHatch.to(0);
-  } else if (!isHatchDropped) {
-    servoHatch.to(180);
-  }
-  isHatchDropped = !isHatchDropped;
-}
-
-const danceHatch = async () => {
-  servoHatch.to(90);
-  await delay(100);
-  servoHatch.to(20);
-  await delay(100);
-  servoHatch.to(90);
-  await delay(100);
-  servoHatch.to(0);
+const lowerHatch = () => {
+  console.log("minskar")
+  if (hatchPos <= 60) return;
+  servoHatch.to(hatchPos - 55);
+  hatchPos -= 55;
 }
 
 const delay = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
@@ -270,7 +262,7 @@ const moveRobot = (Axes) => {
 const moveForward = (x, dist) => {
   let rightMotor = 0;
   let leftMotor = 0;
-  const speed = dist * 150;
+  const speed = dist * 200;
 
   if (x < 0) {
     rightMotor = speed * (1 + x);
@@ -291,7 +283,7 @@ const moveForward = (x, dist) => {
 const moveReverse = (x, dist) => {
   let rightMotor = 0;
   let leftMotor = 0;
-  const speed = dist * 150;
+  const speed = dist * 200;
 
   if (x < 0) {
     rightMotor = speed * (1 + x);
@@ -315,39 +307,93 @@ const motorStop = async () => {
 };
 
 const moveToButton = async () => {
-  servoLowerArm.to(120);
+  servoLowerArm.to(120, 1000);
   await delay(100);
-  servoUpperArm.to(120);
+  servoUpperArm.to(120, 1000);
   await delay(100);
-  servoBase.to(150);
+  servoBase.to(138, 1000);
   await delay(100);
-  servoUpperArm.to(40);
-  servoLowerArm.to(35);
+  servoUpperArm.to(110, 1000);
+  servoLowerArm.to(113, 1000);
+  servoClawSpinner.to(70, 1000);
 };
 
 const moveAwayFromButton = async () => {
-  servoLowerArm.to(100);
-  servoUpperArm.to(140);
+  servoLowerArm.to(100, 1000);
+  servoUpperArm.to(100, 1000);
   await delay(200);
-  servoBase.to(20);
+  servoBase.to(15, 1000);
   await delay(400);
-  servoLowerArm.to(50);
-  servoUpperArm.to(50);
+  servoLowerArm.to(168, 1000);
+  servoUpperArm.to(89, 1000);
 };
 
-const toggleEyes = async () => {
-  
+const moveArmBack = async () => {
+  servoLowerArm.to(120, 1000);
+  servoUpperArm.to(50, 1000);
+  await delay(200);
+  servoBase.to(175, 1000);
+  await delay(400);
+  servoLowerArm.to(65, 1000);
+  servoUpperArm.to(30, 1000);
 }
 
-const toggleHead = async () => {
-  servoNeck.to(0);
-  await delay(1000)
-  servoNeck.to(180);
+const headLeft = async () => {
+  console.log("Vänster")
+  servoNeck.cw(0.1);
+  await delay(250);
+  servoNeck.stop();
+}
+
+const headRight = async () => {
+  console.log("Höger")
+  servoNeck.ccw(0.2);
+  await delay(250);
+  servoNeck.stop();
+}
+
+const headLeftBig = async () => {
+  console.log("Vänster Stor")
+  servoNeck.cw(0.8);
+  await delay(250);
+  servoNeck.stop();
+}
+
+const headRightBig = async () => {
+  console.log("Höger stor")
+  servoNeck.ccw(0.8);
+  await delay(250);
+  servoNeck.stop();
 }
 
 const toggleEyeBrows = async () => {
-  servoEyeBrowRight.to(0);
-  servoEyeBrowLeft.to(0);
+  console.log("Ögonbryn")
+  servoEyeBrowRight.min();
+  //const smallest = servoEyeBrowLeft.min();
+  //console.log(smallest.range[0])
+  servoEyeBrowLeft.min();
+  await delay(1500);
+  servoEyeBrowRight.max();
+  //const biggest = servoEyeBrowLeft.max();
+  servoEyeBrowLeft.max();
+}
+
+const toggleLeftBrow = () => {
+  if (leftBrow) {
+    servoEyeBrowLeft.max();
+  } else {
+    servoEyeBrowLeft.min();
+  }
+  leftBrow = !leftBrow
+}
+
+const toggleRightBrow = () => {
+  if (rightBrow) {
+    servoEyeBrowRight.max();
+  } else {
+    servoEyeBrowRight.min();
+  }
+  rightBrow = !rightBrow
 }
 
 board.on("exit", () => {
@@ -362,13 +408,17 @@ module.exports = {
   moveClaw,
   moveToButton,
   moveAwayFromButton,
+  moveArmBack,
   moveRobot,
   motorStop,
-  toggleHatch,
-  dropHatch,
-  danceHatch,
-  toggleEyes,
-  toggleHead,
+  increaseHatch,
+  lowerHatch,
+  headRight,
+  headLeft,
+  headLeftBig,
+  headRightBig,
   toggleEyeBrows,
+  toggleLeftBrow,
+  toggleRightBrow,
   clawSpin
 };
