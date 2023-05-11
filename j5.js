@@ -161,22 +161,6 @@ board.on("ready", () => {
     motorRight,
   });
 
-  motorLeft.on("start", () => {
-    console.log(`Motorn startades: ${Date.now()}`);
-  });
-
-  motorLeft.on("stop", () => {
-    console.log(`automated stop on timer: ${Date.now()}`);
-  });
-
-  motorLeft.on("forward", () => {
-    console.log(`forward: ${Date.now()}`);
-  });
-
-  motorLeft.on("reverse", () => {
-    console.log(`reverse: ${Date.now()}`);
-  });
-
   isConnected = true;
 });
 
@@ -218,6 +202,7 @@ const clawSpin = (value) => {
   prevAngle = clawSpinnerAngle;
   servoClawSpinner.to(prevAngle + value);
   clawSpinnerAngle += value;
+  console.log("Spinner at: " + clawSpinnerAngle)
 }
 
 const moveClaw = (input) => {
@@ -231,14 +216,12 @@ const moveClaw = (input) => {
 };
 
 const increaseHatch = () => {
-  console.log("Ökar")
   if (hatchPos >= 170) return;
   servoHatch.to(hatchPos + 55);
   hatchPos += 55;
 }
 
 const lowerHatch = () => {
-  console.log("minskar")
   if (hatchPos <= 60) return;
   servoHatch.to(hatchPos - 55);
   hatchPos -= 55;
@@ -264,6 +247,20 @@ const moveForward = (x, dist) => {
   let leftMotor = 0;
   const speed = dist * 200;
 
+  if (x > 0.8) {
+    console.log("Svänger höger framåt")
+    motorLeft.forward(255);
+    motorRight.forward(255);
+    return;
+  }
+
+  if (x < -0.8) {
+    console.log("Svänger vänster framåt")
+    motorLeft.reverse(255);
+    motorRight.reverse(255);
+    return;
+  }
+
   if (x < 0) {
     rightMotor = speed * (1 + x);
   } else {
@@ -284,6 +281,20 @@ const moveReverse = (x, dist) => {
   let rightMotor = 0;
   let leftMotor = 0;
   const speed = dist * 200;
+
+  if (x > 0.8) {
+    console.log("Svänger vänster bakåt")
+    motorLeft.reverse(255);
+    motorRight.reverse(255);
+    return;
+  }
+
+  if (x < -0.8) {
+    console.log("Svänger höger bakåt")
+    motorLeft.forward(255);
+    motorRight.forward(255);
+    return;
+  }
 
   if (x < 0) {
     rightMotor = speed * (1 + x);
@@ -311,21 +322,21 @@ const moveToButton = async () => {
   await delay(100);
   servoUpperArm.to(120, 1000);
   await delay(100);
-  servoBase.to(138, 1000);
+  servoBase.to(140, 1000);
   await delay(100);
   servoUpperArm.to(110, 1000);
-  servoLowerArm.to(113, 1000);
-  servoClawSpinner.to(70, 1000);
+  servoLowerArm.to(95, 1000);
+  servoClawSpinner.to(140, 1000);
 };
 
 const moveAwayFromButton = async () => {
   servoLowerArm.to(100, 1000);
   servoUpperArm.to(100, 1000);
   await delay(200);
-  servoBase.to(15, 1000);
+  servoBase.to(35, 1000);
   await delay(400);
-  servoLowerArm.to(168, 1000);
-  servoUpperArm.to(89, 1000);
+  servoLowerArm.to(155, 1000);
+  servoUpperArm.to(120, 1000);
 };
 
 const moveArmBack = async () => {
@@ -339,42 +350,34 @@ const moveArmBack = async () => {
 }
 
 const headLeft = async () => {
-  console.log("Vänster")
   servoNeck.cw(0.1);
   await delay(250);
   servoNeck.stop();
 }
 
 const headRight = async () => {
-  console.log("Höger")
   servoNeck.ccw(0.2);
   await delay(250);
   servoNeck.stop();
 }
 
 const headLeftBig = async () => {
-  console.log("Vänster Stor")
   servoNeck.cw(0.8);
   await delay(250);
   servoNeck.stop();
 }
 
 const headRightBig = async () => {
-  console.log("Höger stor")
   servoNeck.ccw(0.8);
   await delay(250);
   servoNeck.stop();
 }
 
 const toggleEyeBrows = async () => {
-  console.log("Ögonbryn")
   servoEyeBrowRight.min();
-  //const smallest = servoEyeBrowLeft.min();
-  //console.log(smallest.range[0])
   servoEyeBrowLeft.min();
   await delay(1500);
   servoEyeBrowRight.max();
-  //const biggest = servoEyeBrowLeft.max();
   servoEyeBrowLeft.max();
 }
 
